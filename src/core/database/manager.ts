@@ -159,6 +159,24 @@ export class DatabaseManager {
 
   /*
   |--------------------------------------------------------------------------
+  | Tweet Lookup Methods
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * Get a tweet by its rest_id.
+   */
+  async getTweetById(tweetId: string): Promise<Tweet | undefined> {
+    try {
+      return await this.tweets().where('rest_id').equals(tweetId).first();
+    } catch (err) {
+      this.logError(err);
+      return undefined;
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | Browsing History Methods
   |--------------------------------------------------------------------------
   */

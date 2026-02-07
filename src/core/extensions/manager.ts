@@ -13,6 +13,12 @@ const globalObject = unsafeWindow ?? window ?? globalThis;
  * The original XHR method backup.
  */
 const xhrOpen = globalObject.XMLHttpRequest.prototype.open;
+const xhrSend = globalObject.XMLHttpRequest.prototype.send;
+
+/**
+ * Store request body for each XHR instance.
+ */
+const xhrBodyMap = new WeakMap<XMLHttpRequest, string | null>();
 
 /**
  * The registry for all extensions.
@@ -110,6 +116,16 @@ export class ExtensionManager {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const manager = this;
 
+    // Hook send to capture request body
+    globalObject.XMLHttpRequest.prototype.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
+      if (body && typeof body === 'string') {
+        xhrBodyMap.set(this, body);
+      }
+      // @ts-expect-error it's fine.
+      // eslint-disable-next-line prefer-rest-params
+      return xhrSend.apply(this, arguments);
+    };
+
     globalObject.XMLHttpRequest.prototype.open = function (method: string, url: string) {
       if (manager.debugEnabled) {
         logger.debug(`XHR initialized`, { method, url });
@@ -117,8 +133,10 @@ export class ExtensionManager {
 
       // When the request is done, we call all registered interceptors.
       this.addEventListener('load', () => {
+        const requestBody = xhrBodyMap.get(this) || null;
+
         if (manager.debugEnabled) {
-          logger.debug(`XHR finished`, { method, url });
+          logger.debug(`XHR finished`, { method, url, hasBody: !!requestBody });
         }
 
         // Run current enabled interceptors.
@@ -128,7 +146,7 @@ export class ExtensionManager {
           .forEach((ext) => {
             const func = ext.intercept();
             if (func) {
-              func({ method, url }, this, ext);
+              func({ method, url, body: requestBody }, this, ext);
             }
           });
       });

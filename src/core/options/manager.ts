@@ -16,12 +16,6 @@ export interface AppOptions {
   language?: string;
   dedicatedDbForAccounts?: boolean;
   version?: string;
-  // MemoizeX: Browsing History Options
-  enableBrowsingHistory?: boolean;
-  // MemoizeX: Webhook Options
-  enableLikeWebhooks?: boolean;
-  enableBookmarkWebhooks?: boolean;
-  enableViewWebhooks?: boolean;
 }
 
 export const DEFAULT_APP_OPTIONS: AppOptions = {
@@ -42,12 +36,6 @@ export const DEFAULT_APP_OPTIONS: AppOptions = {
   language: '',
   dedicatedDbForAccounts: false,
   version: packageJson.version,
-  // MemoizeX: Browsing History Options
-  enableBrowsingHistory: true,
-  // MemoizeX: Webhook Options
-  enableLikeWebhooks: true,
-  enableBookmarkWebhooks: true,
-  enableViewWebhooks: false,
 };
 
 // https://daisyui.com/docs/themes/

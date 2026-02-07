@@ -5,7 +5,7 @@ import { extractTweetMedia } from '@/utils/api';
 /**
  * Formats a tweet into a webhook payload.
  *
- * @param tweet - Tweet data
+ * @param tweet - Tweet data (can be minimal with just rest_id)
  * @param eventType - Type of event that triggered the webhook
  * @returns Formatted webhook payload
  */
@@ -19,6 +19,7 @@ export function formatWebhookPayload(tweet: Tweet, eventType: WebhookEventType):
 
 /**
  * Formats tweet data for webhook payload.
+ * Handles both full tweet objects and minimal objects with just rest_id.
  *
  * @param tweet - Tweet data
  * @returns Formatted tweet data
@@ -28,15 +29,22 @@ export function formatTweetData(tweet: Tweet): WebhookTweetData {
   const legacy = tweet.legacy;
   const screenName = author?.core?.screen_name || 'unknown';
 
+  // For minimal tweet objects (only rest_id), return minimal data
+  const isMinimalTweet = !legacy && !author;
+
   return {
     id: tweet.rest_id,
     text: legacy?.full_text || '',
-    author: {
+    author: isMinimalTweet ? {
+      id: '',
+      screen_name: 'unknown',
+      name: '',
+    } : {
       id: author?.rest_id || '',
       screen_name: screenName,
       name: author?.core?.name || '',
     },
-    url: `https://x.com/${screenName}/status/${tweet.rest_id}`,
+    url: `https://x.com/i/status/${tweet.rest_id}`,
     created_at: legacy?.created_at || '',
     stats: {
       likes: legacy?.favorite_count || 0,
@@ -45,7 +53,7 @@ export function formatTweetData(tweet: Tweet): WebhookTweetData {
       quotes: legacy?.quote_count || 0,
       bookmarks: legacy?.bookmark_count || 0,
     },
-    media: formatMediaItems(tweet),
+    media: isMinimalTweet ? [] : formatMediaItems(tweet),
   };
 }
 

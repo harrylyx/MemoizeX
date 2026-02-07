@@ -5,7 +5,6 @@ import { BrowsingHistory, BrowsingSourcePage } from '@/types/browsing';
 import { extractDataFromResponse, extractTimelineTweet } from '@/utils/api';
 import { generateBrowsingHistoryId, DEFAULT_DEDUP_WINDOW_MS } from '@/utils/deduplication';
 import { webhookManager } from '@/core/webhook';
-import { options } from '@/core/options';
 import logger from '@/utils/logger';
 
 /**
@@ -174,11 +173,6 @@ function extractTweetsFromResponse(res: XMLHttpRequest, url: string): Tweet[] {
  * Browsing history interceptor that tracks viewed tweets.
  */
 export const BrowsingHistoryInterceptor: Interceptor = async (req, res, ext) => {
-  // Check if browsing history tracking is enabled
-  if (!options.get('enableBrowsingHistory')) {
-    return;
-  }
-
   // Check if this is a tweet display endpoint
   if (!TWEET_DISPLAY_ENDPOINTS.some((pattern) => pattern.test(req.url))) {
     return;
@@ -221,10 +215,8 @@ export const BrowsingHistoryInterceptor: Interceptor = async (req, res, ext) => 
     // Also save the tweets to the database for reference
     await db.extAddTweets(ext.name, newTweets);
 
-    // Trigger view webhooks if enabled
-    if (options.get('enableViewWebhooks')) {
-      await webhookManager.triggerWebhooksBatch('view', newTweets);
-    }
+    // Trigger view webhooks for enabled configs
+    await webhookManager.triggerWebhooksBatch('view', newTweets);
 
     logger.info(`BrowsingHistory: ${newTweets.length} tweets recorded from ${sourcePage}`);
   } catch (err) {

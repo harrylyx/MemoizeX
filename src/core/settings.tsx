@@ -328,55 +328,6 @@ export function Settings() {
           </div>
         </div>
 
-        {/* MemoizeX Settings */}
-        <p class={styles.subtitle}>MemoizeX</p>
-        <div class={cx(styles.block, 'flex-col')}>
-          <label class={styles.item}>
-            <span class="label-text whitespace-nowrap">Enable Browsing History</span>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              checked={options.get('enableBrowsingHistory')}
-              onChange={(e) => {
-                options.set('enableBrowsingHistory', (e.target as HTMLInputElement)?.checked);
-              }}
-            />
-          </label>
-          <label class={styles.item}>
-            <span class="label-text whitespace-nowrap">Webhook on Like</span>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              checked={options.get('enableLikeWebhooks')}
-              onChange={(e) => {
-                options.set('enableLikeWebhooks', (e.target as HTMLInputElement)?.checked);
-              }}
-            />
-          </label>
-          <label class={styles.item}>
-            <span class="label-text whitespace-nowrap">Webhook on Bookmark</span>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              checked={options.get('enableBookmarkWebhooks')}
-              onChange={(e) => {
-                options.set('enableBookmarkWebhooks', (e.target as HTMLInputElement)?.checked);
-              }}
-            />
-          </label>
-          <label class={styles.item}>
-            <span class="label-text whitespace-nowrap">Webhook on View</span>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary"
-              checked={options.get('enableViewWebhooks')}
-              onChange={(e) => {
-                options.set('enableViewWebhooks', (e.target as HTMLInputElement)?.checked);
-              }}
-            />
-          </label>
-        </div>
-
         {/* Webhook Configurations */}
         <p class={styles.subtitle}>
           <span class="flex items-center gap-2">
