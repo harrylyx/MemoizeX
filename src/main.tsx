@@ -24,7 +24,6 @@ import UserTweetsModule from './modules/user-tweets';
 
 // MemoizeX: New modules
 import BrowsingHistoryModule from './modules/browsing-history';
-import WebhookManagerModule from './modules/webhook-manager';
 
 import './index.css';
 
@@ -50,7 +49,6 @@ extensions.add(RuntimeLogsModule);
 
 // MemoizeX: Register new modules
 extensions.add(BrowsingHistoryModule);
-extensions.add(WebhookManagerModule);
 
 extensions.start();
 
