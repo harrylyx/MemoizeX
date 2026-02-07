@@ -1,67 +1,90 @@
 import { useSignal, useComputed } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { IconHistory, IconTrash, IconDownload, IconRefresh } from '@tabler/icons-preact';
+import { IconTrash, IconDownload, IconRefresh } from '@tabler/icons-preact';
 import dayjs from 'dayjs';
 
-import { ExtensionPanel, Modal } from '@/components/common';
+import { ExtensionPanel, Modal, SearchArea } from '@/components/common';
+import { Pagination } from '@/components/table/pagination';
 import { Extension } from '@/core/extensions';
 import { db } from '@/core/database';
+import { options } from '@/core/options';
 import { BrowsingHistory } from '@/types/browsing';
 import { saveFile, jsonExporter } from '@/utils/exporter';
-import { useToggle } from '@/utils/common';
+import { useToggle, formatDateTime } from '@/utils/common';
+import { useTranslation, TranslationKey } from '@/i18n';
 
 interface BrowsingHistoryUIProps {
   extension: Extension;
 }
 
 export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
+  const { t } = useTranslation();
   const [showModal, toggleShowModal] = useToggle();
   const histories = useSignal<BrowsingHistory[]>([]);
+  const filteredHistories = useSignal<BrowsingHistory[]>([]);
   const totalCount = useSignal(0);
   const isLoading = useSignal(false);
-  const page = useSignal(0);
-  const pageSize = 100;
+  const searchQuery = useSignal('');
+  const currentPage = useSignal(0);
+  const pageSize = useSignal(20);
 
-  const hasMore = useComputed(() => (page.value + 1) * pageSize < totalCount.value);
+  const title = t(extension.name.replace('Module', '') as TranslationKey);
 
-  const loadHistories = async (reset = false) => {
+  const totalPages = useComputed(() => Math.ceil(filteredHistories.value.length / pageSize.value));
+
+  const paginatedHistories = useComputed(() => {
+    const start = currentPage.value * pageSize.value;
+    return filteredHistories.value.slice(start, start + pageSize.value);
+  });
+
+  const loadHistories = async () => {
     isLoading.value = true;
     try {
-      if (reset) {
-        page.value = 0;
-      }
-      const offset = page.value * pageSize;
-      const data = await db.getBrowsingHistories(pageSize, offset);
+      const data = await db.getBrowsingHistories(10000, 0);
       const count = await db.getBrowsingHistoryCount();
-
-      if (reset) {
-        histories.value = data || [];
-      } else {
-        histories.value = [...histories.value, ...(data || [])];
-      }
+      histories.value = data || [];
+      filteredHistories.value = data || [];
       totalCount.value = count || 0;
     } finally {
       isLoading.value = false;
     }
   };
 
-  const loadMore = () => {
-    page.value++;
-    loadHistories();
+  const handleSearch = (query: string) => {
+    searchQuery.value = query;
+    currentPage.value = 0;
+    if (!query) {
+      filteredHistories.value = histories.value;
+    } else {
+      filteredHistories.value = histories.value.filter(
+        (h) =>
+          h.tweet_id.includes(query) ||
+          h.source_page.includes(query.toLowerCase()) ||
+          h.url.includes(query)
+      );
+    }
   };
 
   const clearHistory = async () => {
-    if (confirm('Are you sure you want to clear all browsing history?')) {
+    if (confirm(t('Confirm clear history'))) {
       await db.clearBrowsingHistory();
       histories.value = [];
+      filteredHistories.value = [];
       totalCount.value = 0;
     }
   };
 
   const exportHistory = async () => {
-    const allHistories = await db.getBrowsingHistories(10000, 0);
-    if (allHistories && allHistories.length > 0) {
-      const json = await jsonExporter(allHistories);
+    if (histories.value.length > 0) {
+      const exportData = histories.value.map((h) => ({
+        id: h.id,
+        tweet_id: h.tweet_id,
+        tweet_url: `https://x.com/i/status/${h.tweet_id}`,
+        source_page: h.source_page,
+        viewed_at: formatDateTime(h.viewed_at, options.get('dateTimeFormat')),
+        page_url: h.url,
+      }));
+      const json = await jsonExporter(exportData);
       saveFile(`browsing-history-${dayjs().format('YYYY-MM-DD')}.json`, json);
     }
   };
@@ -76,7 +99,7 @@ export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
   // Load full data when modal opens
   useEffect(() => {
     if (showModal) {
-      loadHistories(true);
+      loadHistories();
     }
   }, [showModal]);
 
@@ -101,108 +124,151 @@ export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
 
   return (
     <ExtensionPanel
-      title="Browsing History"
-      description={`Captured: ${totalCount.value}`}
+      title={title}
+      description={`${t('Captured:')} ${totalCount.value}`}
       active={totalCount.value > 0}
       onClick={toggleShowModal}
-      indicatorColor="bg-accent"
+      indicatorColor="bg-info"
     >
       <Modal
         class="max-w-4xl md:max-w-screen-md sm:max-w-screen-sm min-h-[512px]"
-        title="Browsing History"
+        title={title}
         show={showModal}
         onClose={toggleShowModal}
       >
-        <div class="flex flex-col gap-4 h-full">
-          {/* Toolbar */}
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <IconHistory size={20} />
-              <span class="font-semibold">Browsing History</span>
-              <span class="badge badge-ghost">{totalCount.value} records</span>
-            </div>
-            <div class="flex gap-2">
-              <button
-                class="btn btn-sm btn-ghost"
-                onClick={() => loadHistories(true)}
-                disabled={isLoading.value}
-              >
-                <IconRefresh size={16} />
-                Refresh
-              </button>
-              <button class="btn btn-sm btn-ghost" onClick={exportHistory}>
-                <IconDownload size={16} />
-                Export
-              </button>
-              <button class="btn btn-sm btn-ghost text-error" onClick={clearHistory}>
-                <IconTrash size={16} />
-                Clear
-              </button>
-            </div>
-          </div>
+        {/* Search */}
+        <SearchArea defaultValue={searchQuery.value} onChange={handleSearch} />
 
-          {/* History Table */}
-          <div class="overflow-x-auto flex-1">
-            <table class="table table-sm table-zebra">
-              <thead>
+        {/* Data Table */}
+        <main class="max-w-full grow overflow-scroll bg-base-200 overscroll-none">
+          <table class="table table-pin-rows table-border-bc table-padding-sm">
+            <thead>
+              <tr>
+                <th>{t('Tweet ID' as TranslationKey)}</th>
+                <th>{t('Source' as TranslationKey)}</th>
+                <th>{t('Viewed At' as TranslationKey)}</th>
+                <th>{t('URL')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedHistories.value.length === 0 && !isLoading.value && (
                 <tr>
-                  <th>Tweet ID</th>
-                  <th>Source</th>
-                  <th>Viewed At</th>
-                  <th>URL</th>
+                  <td colSpan={4} class="text-center text-base-content text-opacity-50 py-8">
+                    {t('No data available.')}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {histories.value.length === 0 && !isLoading.value && (
-                  <tr>
-                    <td colSpan={4} class="text-center text-base-content/60 py-8">
-                      No browsing history yet. Browse Twitter to start recording.
-                    </td>
-                  </tr>
-                )}
+              )}
 
-                {histories.value.map((history) => (
-                  <tr key={history.id}>
-                    <td>
-                      <a
-                        href={`https://x.com/i/status/${history.tweet_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="link link-hover font-mono text-sm"
-                      >
-                        {history.tweet_id}
-                      </a>
-                    </td>
-                    <td>
-                      <span class={`badge badge-sm ${getSourceBadgeColor(history.source_page)}`}>
-                        {history.source_page}
-                      </span>
-                    </td>
-                    <td class="text-sm">
-                      {dayjs(history.viewed_at).format('YYYY-MM-DD HH:mm:ss')}
-                    </td>
-                    <td class="max-w-[200px] truncate text-xs text-base-content/60">
-                      {history.url}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              {paginatedHistories.value.map((history) => (
+                <tr key={history.id}>
+                  <td>
+                    <a
+                      href={`https://x.com/i/status/${history.tweet_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="link w-20 break-all font-mono text-xs"
+                    >
+                      {history.tweet_id}
+                    </a>
+                  </td>
+                  <td>
+                    <span class={`badge badge-sm ${getSourceBadgeColor(history.source_page)}`}>
+                      {history.source_page}
+                    </span>
+                  </td>
+                  <td class="w-24">
+                    {formatDateTime(history.viewed_at, options.get('dateTimeFormat'))}
+                  </td>
+                  <td class="max-w-[200px] truncate text-xs text-base-content/60">
+                    {history.url}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-            {isLoading.value && (
-              <div class="flex justify-center py-4">
-                <span class="loading loading-spinner loading-md"></span>
-              </div>
-            )}
+          {isLoading.value && (
+            <div class="flex items-center justify-center h-[320px] w-full">
+              <span class="loading loading-spinner loading-md"></span>
+            </div>
+          )}
+        </main>
 
-            {hasMore.value && !isLoading.value && (
-              <div class="flex justify-center py-4">
-                <button class="btn btn-sm btn-ghost" onClick={loadMore}>
-                  Load More ({totalCount.value - histories.value.length} remaining)
-                </button>
-              </div>
-            )}
+        {/* Pagination */}
+        <div class="flex items-center justify-between py-2 text-sm">
+          <div class="flex items-center gap-2">
+            <span>{t('Rows per page:')}</span>
+            <select
+              class="select select-xs select-bordered"
+              value={pageSize.value}
+              onChange={(e) => {
+                pageSize.value = parseInt((e.target as HTMLSelectElement).value);
+                currentPage.value = 0;
+              }}
+            >
+              {[10, 20, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
           </div>
+          <div class="flex items-center gap-2">
+            <span>
+              {t('A - B of N items', {
+                from: currentPage.value * pageSize.value + 1,
+                to: Math.min((currentPage.value + 1) * pageSize.value, filteredHistories.value.length),
+                total: filteredHistories.value.length,
+              })}
+            </span>
+            <div class="btn-group">
+              <button
+                class="btn btn-xs"
+                disabled={currentPage.value === 0}
+                onClick={() => (currentPage.value = 0)}
+              >
+                «
+              </button>
+              <button
+                class="btn btn-xs"
+                disabled={currentPage.value === 0}
+                onClick={() => currentPage.value--}
+              >
+                ‹
+              </button>
+              <button
+                class="btn btn-xs"
+                disabled={currentPage.value >= totalPages.value - 1}
+                onClick={() => currentPage.value++}
+              >
+                ›
+              </button>
+              <button
+                class="btn btn-xs"
+                disabled={currentPage.value >= totalPages.value - 1}
+                onClick={() => (currentPage.value = totalPages.value - 1)}
+              >
+                »
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div class="flex mt-3 space-x-2">
+          <button class="btn btn-neutral btn-ghost" onClick={clearHistory}>
+            <IconTrash size={16} />
+            {t('Clear')}
+          </button>
+          <span class="flex-grow" />
+          <button class="btn btn-ghost" onClick={() => loadHistories()}>
+            <IconRefresh size={16} />
+            {t('Refresh' as TranslationKey)}
+          </button>
+          <button class="btn btn-primary" onClick={exportHistory}>
+            <IconDownload size={16} />
+            {t('Export Data')}
+          </button>
         </div>
       </Modal>
     </ExtensionPanel>

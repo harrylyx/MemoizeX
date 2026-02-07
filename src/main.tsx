@@ -44,11 +44,12 @@ extensions.add(UserTweetsModule);
 extensions.add(UserMediaModule);
 extensions.add(TweetDetailModule);
 extensions.add(SearchTimelineModule);
+
+// MemoizeX: Browsing History (before DirectMessages)
+extensions.add(BrowsingHistoryModule);
+
 extensions.add(DirectMessagesModule);
 extensions.add(RuntimeLogsModule);
-
-// MemoizeX: Register new modules
-extensions.add(BrowsingHistoryModule);
 
 extensions.start();
 
