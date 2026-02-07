@@ -1,38 +1,53 @@
-# Distribution / Packaging
-build/
+# Dependencies
+node_modules/
+
+# Build output
 dist/
-*.egg-info/
-*.egg
+build/
 
-# Unit Test / Coverage
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
+# Logs
 *.log
-.pytest_cache/
-.hypothesis/
+npm-debug.log*
 
-# macOS
-.DS_Store
+# Environment
+.env
+.env.local
+.env.*.local
 
-# IDEs
+# IDE / Editor
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
-# Environment Variables
-.env
-.env.local
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# Gemini CLI
-.gemini/
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
+# Linux
+*~
 
+# Test / Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# Reference project (development only)
 references/
+
+# Husky
+.husky/_/
