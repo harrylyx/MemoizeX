@@ -76,5 +76,13 @@
   "No browsing history": "No browsing history yet.",
   "Confirm delete webhook": "Are you sure you want to delete this webhook?",
   "Confirm clear logs": "Are you sure you want to clear all webhook logs?",
-  "Confirm clear history": "Are you sure you want to clear all browsing history?"
+  "Confirm clear history": "Are you sure you want to clear all browsing history?",
+  "Article Title": "Article Title",
+  "Article Preview": "Article Preview",
+  "Article URL": "Article URL",
+  "Article Cover": "Article Cover",
+  "Quoted Article Title": "Quoted Article Title",
+  "Quoted Article Preview": "Quoted Article Preview",
+  "Quoted Article URL": "Quoted Article URL",
+  "Quoted Article Cover": "Quoted Article Cover"
 }

@@ -100,6 +100,79 @@ export interface WebhookTweetData {
   };
   /** Media attachments */
   media: WebhookMediaItem[];
+  /** Retweet source (if this is a retweet) */
+  retweeted_tweet?: WebhookRetweetedTweet;
+  /** Quoted tweet (if this quotes another tweet) */
+  quoted_tweet?: WebhookQuotedTweet;
+  /** URLs/links in the tweet */
+  urls?: WebhookUrlItem[];
+  /** Article data (if this is a Twitter Article) */
+  article?: WebhookArticle;
+}
+
+/**
+ * Twitter Article data.
+ */
+export interface WebhookArticle {
+  /** Article ID */
+  id: string;
+  /** Article title */
+  title: string;
+  /** Article preview text */
+  preview_text: string;
+  /** Article URL */
+  url: string;
+  /** Cover image URL */
+  cover_image_url?: string;
+}
+
+/**
+ * Retweeted tweet data.
+ */
+export interface WebhookRetweetedTweet {
+  id: string;
+  text: string;
+  author: {
+    id: string;
+    screen_name: string;
+    name: string;
+  };
+  url: string;
+  created_at: string;
+  media: WebhookMediaItem[];
+}
+
+/**
+ * Quoted tweet data.
+ */
+export interface WebhookQuotedTweet {
+  id: string;
+  text: string;
+  author: {
+    id: string;
+    screen_name: string;
+    name: string;
+  };
+  url: string;
+  created_at: string;
+  /** Article data (if the quoted tweet contains an article) */
+  article?: WebhookArticle;
+}
+
+/**
+ * URL item in tweet.
+ */
+export interface WebhookUrlItem {
+  /** Shortened URL */
+  url: string;
+  /** Expanded URL */
+  expanded_url: string;
+  /** Display URL */
+  display_url: string;
+  /** Title (if available, e.g., for articles) */
+  title?: string;
+  /** Description (if available) */
+  description?: string;
 }
 
 /**

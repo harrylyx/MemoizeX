@@ -65,7 +65,7 @@ export function App() {
         {/* Card title. */}
         <header class="flex items-center h-9">
           <IconBrandTwitterFilled class="mr-2" />
-          <h2 class="font-semibold leading-none text-xl m-0 flex-grow">Web Exporter</h2>
+          <h2 class="font-semibold leading-none text-xl m-0 flex-grow">MemoizeX</h2>
           <ErrorBoundary>
             <Settings />
           </ErrorBoundary>

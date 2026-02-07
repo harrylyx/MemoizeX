@@ -246,6 +246,86 @@ export const columns = [
     },
   }),
   columnHelper.display({
+    id: 'quoted_article_title',
+    meta: {
+      exportKey: 'quoted_article_title',
+      exportHeader: 'Quoted Article Title',
+      exportValue: (row) => extractQuotedTweet(row.original)?.article?.article_results?.result?.title,
+    },
+    header: () => <Trans i18nKey="Quoted Article Title" />,
+    cell: (info) => {
+      const quoted = extractQuotedTweet(info.row.original);
+      const title = quoted?.article?.article_results?.result?.title;
+      return <p class="w-40 whitespace-pre-wrap">{title ?? 'N/A'}</p>;
+    },
+  }),
+  columnHelper.display({
+    id: 'quoted_article_preview',
+    meta: {
+      exportKey: 'quoted_article_preview',
+      exportHeader: 'Quoted Article Preview',
+      exportValue: (row) => extractQuotedTweet(row.original)?.article?.article_results?.result?.preview_text,
+    },
+    header: () => <Trans i18nKey="Quoted Article Preview" />,
+    cell: (info) => {
+      const quoted = extractQuotedTweet(info.row.original);
+      const preview = quoted?.article?.article_results?.result?.preview_text;
+      return <p class="w-60 whitespace-pre-wrap line-clamp-3">{preview ?? 'N/A'}</p>;
+    },
+  }),
+  columnHelper.display({
+    id: 'quoted_article_url',
+    meta: {
+      exportKey: 'quoted_article_url',
+      exportHeader: 'Quoted Article URL',
+      exportValue: (row) => {
+        const articleId = extractQuotedTweet(row.original)?.article?.article_results?.result?.rest_id;
+        return articleId ? `https://x.com/i/article/${articleId}` : null;
+      },
+    },
+    header: () => <Trans i18nKey="Quoted Article URL" />,
+    cell: (info) => {
+      const quoted = extractQuotedTweet(info.row.original);
+      const articleId = quoted?.article?.article_results?.result?.rest_id;
+      return articleId ? (
+        <a
+          href={`https://x.com/i/article/${articleId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link text-xs"
+        >
+          <IconLink size={16} />
+        </a>
+      ) : (
+        <p>N/A</p>
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'quoted_article_cover',
+    meta: {
+      exportKey: 'quoted_article_cover_url',
+      exportHeader: 'Quoted Article Cover',
+      exportValue: (row) =>
+        extractQuotedTweet(row.original)?.article?.article_results?.result?.cover_media?.media_info?.original_img_url,
+    },
+    header: () => <Trans i18nKey="Quoted Article Cover" />,
+    cell: (info) => {
+      const quoted = extractQuotedTweet(info.row.original);
+      const coverUrl = quoted?.article?.article_results?.result?.cover_media?.media_info?.original_img_url;
+      return coverUrl ? (
+        <div
+          class="cursor-pointer"
+          onClick={() => info.table.options.meta?.setMediaPreview(coverUrl)}
+        >
+          <img class="w-16 h-10 object-cover rounded" src={coverUrl} />
+        </div>
+      ) : (
+        <p>N/A</p>
+      );
+    },
+  }),
+  columnHelper.display({
     id: 'media_tags',
     meta: {
       exportKey: 'media_tags',
@@ -314,6 +394,75 @@ export const columns = [
     meta: { exportKey: 'bookmarked', exportHeader: 'Bookmarked' },
     header: () => <Trans i18nKey="Bookmarked" />,
     cell: (info) => <p>{info.getValue() ? 'YES' : 'NO'}</p>,
+  }),
+  columnHelper.accessor('article.article_results.result.title', {
+    meta: {
+      exportKey: 'article_title',
+      exportHeader: 'Article Title',
+    },
+    header: () => <Trans i18nKey="Article Title" />,
+    cell: (info) => <p class="w-40 whitespace-pre-wrap">{info.getValue() ?? 'N/A'}</p>,
+  }),
+  columnHelper.accessor('article.article_results.result.preview_text', {
+    meta: {
+      exportKey: 'article_preview',
+      exportHeader: 'Article Preview',
+    },
+    header: () => <Trans i18nKey="Article Preview" />,
+    cell: (info) => (
+      <p class="w-60 whitespace-pre-wrap line-clamp-3">{info.getValue() ?? 'N/A'}</p>
+    ),
+  }),
+  columnHelper.display({
+    id: 'article_url',
+    meta: {
+      exportKey: 'article_url',
+      exportHeader: 'Article URL',
+      exportValue: (row) => {
+        const articleId = row.original.article?.article_results?.result?.rest_id;
+        return articleId ? `https://x.com/i/article/${articleId}` : null;
+      },
+    },
+    header: () => <Trans i18nKey="Article URL" />,
+    cell: (info) => {
+      const articleId = info.row.original.article?.article_results?.result?.rest_id;
+      return articleId ? (
+        <a
+          href={`https://x.com/i/article/${articleId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link text-xs"
+        >
+          <IconLink size={16} />
+        </a>
+      ) : (
+        <p>N/A</p>
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'article_cover',
+    meta: {
+      exportKey: 'article_cover_url',
+      exportHeader: 'Article Cover',
+      exportValue: (row) =>
+        row.original.article?.article_results?.result?.cover_media?.media_info?.original_img_url,
+    },
+    header: () => <Trans i18nKey="Article Cover" />,
+    cell: (info) => {
+      const coverUrl =
+        info.row.original.article?.article_results?.result?.cover_media?.media_info?.original_img_url;
+      return coverUrl ? (
+        <div
+          class="cursor-pointer"
+          onClick={() => info.table.options.meta?.setMediaPreview(coverUrl)}
+        >
+          <img class="w-16 h-10 object-cover rounded" src={coverUrl} />
+        </div>
+      ) : (
+        <p>N/A</p>
+      );
+    },
   }),
   columnHelper.display({
     id: 'url',

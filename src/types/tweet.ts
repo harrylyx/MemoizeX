@@ -97,6 +97,33 @@ export interface Tweet {
       result: NoteTweet;
     };
   };
+  // Used for Twitter Articles.
+  article?: {
+    article_results: {
+      result: {
+        rest_id: string;
+        id: string;
+        title: string;
+        preview_text: string;
+        cover_media?: {
+          media_key: string;
+          media_id: string;
+          media_info?: {
+            __typename: string;
+            original_img_url?: string;
+            original_img_height?: number;
+            original_img_width?: number;
+          };
+        };
+        lifecycle_state?: {
+          modified_at_secs: number;
+        };
+        metadata?: {
+          first_published_at_secs: number;
+        };
+      };
+    };
+  };
   legacy: {
     bookmark_count: number;
     bookmarked: boolean;

@@ -2,10 +2,13 @@
 
 Enhanced Twitter/X data management with browsing history tracking and webhook notifications.
 
+> This project is based on [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter) by [@prinsss](https://github.com/prinsss). Thanks for the excellent work!
+
 ## Features
 
 - **Browsing History** - Automatically records tweets you view with source tracking (home, profile, search, etc.)
 - **Webhook Notifications** - Triggers webhooks on like, bookmark, and view events
+- **Article Support** - Captures Twitter Articles with title, preview, cover image, and URL
 - **Data Export** - Export tweets, bookmarks, likes, followers, and more to JSON/CSV/HTML
 - **Media Download** - Bulk download images and videos at original quality
 - **Local Storage** - All data stored in browser IndexedDB, never leaves your computer
@@ -68,7 +71,21 @@ Once installed, a floating panel appears on Twitter/X pages:
     },
     "media": [
       { "type": "photo", "url": "https://..." }
-    ]
+    ],
+    "article": {
+      "id": "1234567890",
+      "title": "Article Title",
+      "preview_text": "Article preview...",
+      "url": "https://x.com/i/article/1234567890",
+      "cover_image_url": "https://..."
+    },
+    "quoted_tweet": {
+      "id": "0987654321",
+      "text": "Quoted content...",
+      "author": { "id": "...", "screen_name": "...", "name": "..." },
+      "url": "https://x.com/...",
+      "article": { "..." }
+    }
   }
 }
 ```
@@ -104,6 +121,10 @@ Key constraints:
 - All data processing happens locally in your browser
 - No data is sent to external servers (except your configured webhooks)
 - No Twitter API credentials required
+
+## Credits
+
+- [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter) - The original project this is based on
 
 ## License
 

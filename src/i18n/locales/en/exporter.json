@@ -82,5 +82,14 @@
   "filter.photo": "Photo",
   "filter.video": "Video",
   "filter.animated_gif": "GIF",
-  "filter.retweet": "Include retweets"
+  "filter.retweet": "Include retweets",
+
+  "Article Title": "Article Title",
+  "Article Preview": "Article Preview",
+  "Article URL": "Article URL",
+  "Article Cover": "Article Cover",
+  "Quoted Article Title": "Quoted Article Title",
+  "Quoted Article Preview": "Quoted Article Preview",
+  "Quoted Article URL": "Quoted Article URL",
+  "Quoted Article Cover": "Quoted Article Cover"
 }

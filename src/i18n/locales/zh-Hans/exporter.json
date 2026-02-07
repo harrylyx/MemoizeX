@@ -82,5 +82,14 @@
   "filter.photo": "图片",
   "filter.video": "视频",
   "filter.animated_gif": "GIF",
-  "filter.retweet": "包括转推"
+  "filter.retweet": "包括转推",
+
+  "Article Title": "文章标题",
+  "Article Preview": "文章预览",
+  "Article URL": "文章链接",
+  "Article Cover": "文章封面",
+  "Quoted Article Title": "引用文章标题",
+  "Quoted Article Preview": "引用文章预览",
+  "Quoted Article URL": "引用文章链接",
+  "Quoted Article Cover": "引用文章封面"
 }

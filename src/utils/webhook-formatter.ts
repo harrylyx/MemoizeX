@@ -1,5 +1,14 @@
-import { Tweet } from '@/types';
-import { WebhookEventType, WebhookPayload, WebhookTweetData, WebhookMediaItem } from '@/types/webhook';
+import { Tweet, TweetUnion } from '@/types';
+import {
+  WebhookEventType,
+  WebhookPayload,
+  WebhookTweetData,
+  WebhookMediaItem,
+  WebhookRetweetedTweet,
+  WebhookQuotedTweet,
+  WebhookUrlItem,
+  WebhookArticle,
+} from '@/types/webhook';
 import { extractTweetMedia } from '@/utils/api';
 
 /**
@@ -18,6 +27,16 @@ export function formatWebhookPayload(tweet: Tweet, eventType: WebhookEventType):
 }
 
 /**
+ * Extracts the actual Tweet from a TweetUnion (handles TweetWithVisibilityResults).
+ */
+function extractTweetFromUnion(tweetUnion: TweetUnion | undefined): Tweet | undefined {
+  if (!tweetUnion) return undefined;
+  if (tweetUnion.__typename === 'Tweet') return tweetUnion;
+  if (tweetUnion.__typename === 'TweetWithVisibilityResults') return tweetUnion.tweet;
+  return undefined;
+}
+
+/**
  * Formats tweet data for webhook payload.
  * Handles both full tweet objects and minimal objects with just rest_id.
  *
@@ -32,19 +51,31 @@ export function formatTweetData(tweet: Tweet): WebhookTweetData {
   // For minimal tweet objects (only rest_id), return minimal data
   const isMinimalTweet = !legacy && !author;
 
-  return {
+  if (isMinimalTweet) {
+    return {
+      id: tweet.rest_id,
+      text: '',
+      author: { id: '', screen_name: 'unknown', name: '' },
+      url: `https://x.com/i/status/${tweet.rest_id}`,
+      created_at: '',
+      stats: { likes: 0, retweets: 0, replies: 0, quotes: 0, bookmarks: 0 },
+      media: [],
+    };
+  }
+
+  // Get full text (prefer note_tweet for long tweets/articles)
+  const fullText = tweet.note_tweet?.note_tweet_results?.result?.text || legacy?.full_text || '';
+
+  // Build the result
+  const result: WebhookTweetData = {
     id: tweet.rest_id,
-    text: legacy?.full_text || '',
-    author: isMinimalTweet ? {
-      id: '',
-      screen_name: 'unknown',
-      name: '',
-    } : {
+    text: fullText,
+    author: {
       id: author?.rest_id || '',
       screen_name: screenName,
       name: author?.core?.name || '',
     },
-    url: `https://x.com/i/status/${tweet.rest_id}`,
+    url: `https://x.com/${screenName}/status/${tweet.rest_id}`,
     created_at: legacy?.created_at || '',
     stats: {
       likes: legacy?.favorite_count || 0,
@@ -53,7 +84,128 @@ export function formatTweetData(tweet: Tweet): WebhookTweetData {
       quotes: legacy?.quote_count || 0,
       bookmarks: legacy?.bookmark_count || 0,
     },
-    media: isMinimalTweet ? [] : formatMediaItems(tweet),
+    media: formatMediaItems(tweet),
+  };
+
+  // Add retweeted tweet if present
+  const retweetedTweet = extractTweetFromUnion(legacy?.retweeted_status_result?.result);
+  if (retweetedTweet) {
+    result.retweeted_tweet = formatRetweetedTweet(retweetedTweet);
+  }
+
+  // Add quoted tweet if present
+  const quotedTweet = extractTweetFromUnion(tweet.quoted_status_result?.result);
+  if (quotedTweet) {
+    result.quoted_tweet = formatQuotedTweet(quotedTweet);
+  }
+
+  // Add URLs if present
+  const urls = legacy?.entities?.urls;
+  if (urls && urls.length > 0) {
+    result.urls = formatUrls(urls);
+  }
+
+  // Add article if present
+  const article = tweet.article?.article_results?.result;
+  if (article) {
+    result.article = formatArticle(article, urls);
+  }
+
+  return result;
+}
+
+/**
+ * Formats a retweeted tweet.
+ */
+function formatRetweetedTweet(tweet: Tweet): WebhookRetweetedTweet {
+  const author = tweet.core?.user_results?.result;
+  const legacy = tweet.legacy;
+  const screenName = author?.core?.screen_name || 'unknown';
+  const fullText = tweet.note_tweet?.note_tweet_results?.result?.text || legacy?.full_text || '';
+
+  return {
+    id: tweet.rest_id,
+    text: fullText,
+    author: {
+      id: author?.rest_id || '',
+      screen_name: screenName,
+      name: author?.core?.name || '',
+    },
+    url: `https://x.com/${screenName}/status/${tweet.rest_id}`,
+    created_at: legacy?.created_at || '',
+    media: formatMediaItems(tweet),
+  };
+}
+
+/**
+ * Formats a quoted tweet.
+ */
+function formatQuotedTweet(tweet: Tweet): WebhookQuotedTweet {
+  const author = tweet.core?.user_results?.result;
+  const legacy = tweet.legacy;
+  const screenName = author?.core?.screen_name || 'unknown';
+  const fullText = tweet.note_tweet?.note_tweet_results?.result?.text || legacy?.full_text || '';
+
+  const result: WebhookQuotedTweet = {
+    id: tweet.rest_id,
+    text: fullText,
+    author: {
+      id: author?.rest_id || '',
+      screen_name: screenName,
+      name: author?.core?.name || '',
+    },
+    url: `https://x.com/${screenName}/status/${tweet.rest_id}`,
+    created_at: legacy?.created_at || '',
+  };
+
+  // Add article if the quoted tweet contains one
+  const article = tweet.article?.article_results?.result;
+  if (article) {
+    result.article = formatArticle(article, legacy?.entities?.urls);
+  }
+
+  return result;
+}
+
+/**
+ * Formats URL entities from a tweet.
+ */
+function formatUrls(urls: Array<{ url: string; expanded_url: string; display_url: string }>): WebhookUrlItem[] {
+  return urls
+    .filter((u) => !u.expanded_url.includes('twitter.com/') && !u.expanded_url.includes('x.com/'))
+    .map((u) => ({
+      url: u.url,
+      expanded_url: u.expanded_url,
+      display_url: u.display_url,
+    }));
+}
+
+/**
+ * Formats article data from a tweet.
+ */
+function formatArticle(
+  article: {
+    rest_id: string;
+    title: string;
+    preview_text: string;
+    cover_media?: {
+      media_info?: {
+        original_img_url?: string;
+      };
+    };
+  },
+  urls?: Array<{ url: string; expanded_url: string; display_url: string }>,
+): WebhookArticle {
+  // Find the article URL from the tweet's URLs
+  const articleUrl = urls?.find((u) => u.expanded_url.includes('/article/'))?.expanded_url
+    || `https://x.com/i/article/${article.rest_id}`;
+
+  return {
+    id: article.rest_id,
+    title: article.title,
+    preview_text: article.preview_text,
+    url: articleUrl,
+    cover_image_url: article.cover_media?.media_info?.original_img_url,
   };
 }
 
