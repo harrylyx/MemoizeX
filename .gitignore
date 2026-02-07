@@ -1,0 +1,38 @@
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit Test / Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+.hypothesis/
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment Variables
+.env
+.env.local
+
+# Gemini CLI
+.gemini/
+
+
+references/
