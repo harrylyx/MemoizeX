@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,12 +30,88 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Create Release
+      - name: Verify build output
+        run: |
+          ls -la dist/
+          test -f dist/memoizex.user.js && echo "Build successful!" || exit 1
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Check if first release
+        id: check_first
+        run: |
+          if [ "${{ steps.get_version.outputs.VERSION }}" = "v1.0.0" ]; then
+            echo "FIRST_RELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "FIRST_RELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create First Release
+        if: steps.check_first.outputs.FIRST_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
+          name: MemoizeX ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## MemoizeX v1.0.0 - Initial Release 🎉
+
+            Enhanced Twitter/X data management with browsing history tracking and webhook notifications.
+
+            > Based on [twitter-web-exporter](https://github.com/prinsss/twitter-web-exporter)
+
+            ### Features
+
+            - **Browsing History** - Automatically records tweets you view with source tracking
+            - **Webhook Notifications** - Triggers webhooks on like, bookmark, and view events
+            - **Article Support** - Captures Twitter Articles with title, preview, cover image, and URL
+            - **Data Export** - Export tweets, bookmarks, likes, followers to JSON/CSV/HTML
+            - **Media Download** - Bulk download images and videos at original quality
+            - **Local Storage** - All data stored locally in IndexedDB
+
+            ### Installation
+
+            1. Install [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/)
+            2. Click on `memoizex.user.js` below to install
+
+            ### Webhook Payload Example
+
+            ```json
+            {
+              "event": "like",
+              "timestamp": 1699999999999,
+              "data": {
+                "id": "1234567890",
+                "text": "Tweet content...",
+                "author": { "id": "...", "screen_name": "...", "name": "..." },
+                "url": "https://x.com/username/status/1234567890",
+                "stats": { "likes": 100, "retweets": 50, ... },
+                "media": [...],
+                "article": { "title": "...", "preview_text": "...", "url": "..." },
+                "quoted_tweet": { ... }
+              }
+            }
+            ```
+
+            ### Privacy
+
+            - All data processing happens locally in your browser
+            - No data is sent to external servers (except your configured webhooks)
           files: |
             dist/memoizex.user.js
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        if: steps.check_first.outputs.FIRST_RELEASE == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MemoizeX ${{ steps.get_version.outputs.VERSION }}
           generate_release_notes: true
+          files: |
+            dist/memoizex.user.js
           draft: false
           prerelease: false
         env:
