@@ -3,21 +3,24 @@ import { useEffect } from 'preact/hooks';
 import { IconHistory, IconTrash, IconDownload, IconRefresh } from '@tabler/icons-preact';
 import dayjs from 'dayjs';
 
+import { ExtensionPanel, Modal } from '@/components/common';
 import { Extension } from '@/core/extensions';
 import { db } from '@/core/database';
 import { BrowsingHistory } from '@/types/browsing';
 import { saveFile, jsonExporter } from '@/utils/exporter';
+import { useToggle } from '@/utils/common';
 
 interface BrowsingHistoryUIProps {
   extension: Extension;
 }
 
 export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
+  const [showModal, toggleShowModal] = useToggle();
   const histories = useSignal<BrowsingHistory[]>([]);
   const totalCount = useSignal(0);
   const isLoading = useSignal(false);
   const page = useSignal(0);
-  const pageSize = 50;
+  const pageSize = 100;
 
   const hasMore = useComputed(() => (page.value + 1) * pageSize < totalCount.value);
 
@@ -63,9 +66,19 @@ export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
     }
   };
 
+  // Load count on mount for panel display
   useEffect(() => {
-    loadHistories(true);
+    db.getBrowsingHistoryCount().then((count) => {
+      totalCount.value = count || 0;
+    });
   }, []);
+
+  // Load full data when modal opens
+  useEffect(() => {
+    if (showModal) {
+      loadHistories(true);
+    }
+  }, [showModal]);
 
   const getSourceBadgeColor = (source: string) => {
     switch (source) {
@@ -87,75 +100,111 @@ export function BrowsingHistoryUI({ extension }: BrowsingHistoryUIProps) {
   };
 
   return (
-    <div class="flex flex-col gap-4">
-      {/* Header */}
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <IconHistory size={20} />
-          <span class="font-semibold">Browsing History</span>
-          <span class="badge badge-ghost">{totalCount.value}</span>
-        </div>
-        <div class="flex gap-2">
-          <button
-            class="btn btn-sm btn-ghost"
-            onClick={() => loadHistories(true)}
-            disabled={isLoading.value}
-          >
-            <IconRefresh size={16} />
-          </button>
-          <button class="btn btn-sm btn-ghost" onClick={exportHistory}>
-            <IconDownload size={16} />
-          </button>
-          <button class="btn btn-sm btn-ghost text-error" onClick={clearHistory}>
-            <IconTrash size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* History List */}
-      <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
-        {histories.value.length === 0 && !isLoading.value && (
-          <div class="text-center text-base-content/60 py-8">
-            No browsing history yet.
-          </div>
-        )}
-
-        {histories.value.map((history) => (
-          <div
-            key={history.id}
-            class="flex items-center justify-between p-2 bg-base-200 rounded-lg"
-          >
-            <div class="flex flex-col gap-1">
-              <a
-                href={`https://x.com/i/status/${history.tweet_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="link link-hover text-sm font-mono"
+    <ExtensionPanel
+      title="Browsing History"
+      description={`Captured: ${totalCount.value}`}
+      active={totalCount.value > 0}
+      onClick={toggleShowModal}
+      indicatorColor="bg-accent"
+    >
+      <Modal
+        class="max-w-4xl md:max-w-screen-md sm:max-w-screen-sm min-h-[512px]"
+        title="Browsing History"
+        show={showModal}
+        onClose={toggleShowModal}
+      >
+        <div class="flex flex-col gap-4 h-full">
+          {/* Toolbar */}
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <IconHistory size={20} />
+              <span class="font-semibold">Browsing History</span>
+              <span class="badge badge-ghost">{totalCount.value} records</span>
+            </div>
+            <div class="flex gap-2">
+              <button
+                class="btn btn-sm btn-ghost"
+                onClick={() => loadHistories(true)}
+                disabled={isLoading.value}
               >
-                {history.tweet_id}
-              </a>
-              <div class="flex items-center gap-2 text-xs text-base-content/60">
-                <span class={`badge badge-xs ${getSourceBadgeColor(history.source_page)}`}>
-                  {history.source_page}
-                </span>
-                <span>{dayjs(history.viewed_at).format('YYYY-MM-DD HH:mm:ss')}</span>
-              </div>
+                <IconRefresh size={16} />
+                Refresh
+              </button>
+              <button class="btn btn-sm btn-ghost" onClick={exportHistory}>
+                <IconDownload size={16} />
+                Export
+              </button>
+              <button class="btn btn-sm btn-ghost text-error" onClick={clearHistory}>
+                <IconTrash size={16} />
+                Clear
+              </button>
             </div>
           </div>
-        ))}
 
-        {isLoading.value && (
-          <div class="flex justify-center py-4">
-            <span class="loading loading-spinner loading-sm"></span>
+          {/* History Table */}
+          <div class="overflow-x-auto flex-1">
+            <table class="table table-sm table-zebra">
+              <thead>
+                <tr>
+                  <th>Tweet ID</th>
+                  <th>Source</th>
+                  <th>Viewed At</th>
+                  <th>URL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {histories.value.length === 0 && !isLoading.value && (
+                  <tr>
+                    <td colSpan={4} class="text-center text-base-content/60 py-8">
+                      No browsing history yet. Browse Twitter to start recording.
+                    </td>
+                  </tr>
+                )}
+
+                {histories.value.map((history) => (
+                  <tr key={history.id}>
+                    <td>
+                      <a
+                        href={`https://x.com/i/status/${history.tweet_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="link link-hover font-mono text-sm"
+                      >
+                        {history.tweet_id}
+                      </a>
+                    </td>
+                    <td>
+                      <span class={`badge badge-sm ${getSourceBadgeColor(history.source_page)}`}>
+                        {history.source_page}
+                      </span>
+                    </td>
+                    <td class="text-sm">
+                      {dayjs(history.viewed_at).format('YYYY-MM-DD HH:mm:ss')}
+                    </td>
+                    <td class="max-w-[200px] truncate text-xs text-base-content/60">
+                      {history.url}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {isLoading.value && (
+              <div class="flex justify-center py-4">
+                <span class="loading loading-spinner loading-md"></span>
+              </div>
+            )}
+
+            {hasMore.value && !isLoading.value && (
+              <div class="flex justify-center py-4">
+                <button class="btn btn-sm btn-ghost" onClick={loadMore}>
+                  Load More ({totalCount.value - histories.value.length} remaining)
+                </button>
+              </div>
+            )}
           </div>
-        )}
-
-        {hasMore.value && !isLoading.value && (
-          <button class="btn btn-sm btn-ghost" onClick={loadMore}>
-            Load More
-          </button>
-        )}
-      </div>
-    </div>
+        </div>
+      </Modal>
+    </ExtensionPanel>
   );
 }
