@@ -14,6 +14,7 @@ import {
   TweetUnion,
   User,
 } from '@/types';
+import { options } from '@/core/options';
 import logger from './logger';
 
 /**
@@ -202,12 +203,21 @@ export function isTimelineEntryCommunitiesGrid(
 
 export function extractTweetUnion(tweet: TweetUnion): Tweet | null {
   try {
+    let result: Tweet | null = null;
+
     if (tweet.__typename === 'Tweet') {
-      return filterEmptyTweet(tweet);
+      result = filterEmptyTweet(tweet);
+    } else if (tweet.__typename === 'TweetWithVisibilityResults') {
+      result = filterEmptyTweet(tweet.tweet);
     }
 
-    if (tweet.__typename === 'TweetWithVisibilityResults') {
-      return filterEmptyTweet(tweet.tweet);
+    // Filter promoted tweets if the option is enabled
+    if (result && options.get('filterPromotedTweets', true)) {
+      result = filterPromotedTweet(result);
+    }
+
+    if (result) {
+      return result;
     }
 
     if (tweet.__typename === 'TweetTombstone') {
@@ -290,6 +300,37 @@ export function filterEmptyTweet(tweet: Tweet): Tweet | null {
     return null;
   }
 
+  return tweet;
+}
+
+/**
+ * Check if a tweet is a promoted/advertisement tweet.
+ * Promoted tweets have specific characteristics like ad-related sources or scopes field.
+ */
+export function isPromotedTweet(tweet: Tweet): boolean {
+  // 1. Check if source contains ad platform identifiers
+  const adSourcePatterns = ['twads', 'ads-api', 'advertiser-interface', 'promoted'];
+  const sourceLower = tweet.source?.toLowerCase() ?? '';
+  if (adSourcePatterns.some((pattern) => sourceLower.includes(pattern))) {
+    return true;
+  }
+
+  // 2. Check for scopes field (typically present in promoted tweets)
+  if (tweet.legacy.scopes !== undefined) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Filter out promoted tweets if the option is enabled.
+ */
+export function filterPromotedTweet(tweet: Tweet): Tweet | null {
+  if (isPromotedTweet(tweet)) {
+    logger.debug('Filtered promoted tweet', tweet.rest_id);
+    return null;
+  }
   return tweet;
 }
 

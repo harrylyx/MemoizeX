@@ -274,6 +274,27 @@ export function Settings() {
               }}
             />
           </label>
+          <label class={styles.item}>
+            <div class="flex items-center">
+              <span class="label-text whitespace-nowrap">{t('Filter promoted tweets')}</span>
+              <a
+                class="tooltip tooltip-bottom ml-0.5 before:max-w-40"
+                data-tip={t(
+                  'Automatically filter out promoted/advertisement tweets from being saved to the database.',
+                )}
+              >
+                <IconHelp size={20} />
+              </a>
+            </div>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary"
+              checked={options.get('filterPromotedTweets')}
+              onChange={(e) => {
+                options.set('filterPromotedTweets', (e.target as HTMLInputElement)?.checked);
+              }}
+            />
+          </label>
           <div class={styles.item}>
             <div class="flex items-center">
               <span class="label-text whitespace-nowrap">{t('Local Database')}</span>

@@ -10,6 +10,8 @@
   "Click for more information. This will take effect on both previewer and exported files.": "Click for more information. This will take effect on both previewer and exported files.",
   "Use dedicated DB for accounts": "Use dedicated DB for accounts",
   "This will create separate database for each Twitter account, which can help reduce the chance of data mixing when you use multiple accounts.": "This will create separate database for each Twitter account, which can help reduce the chance of data mixing when you use multiple accounts.",
+  "Filter promoted tweets": "Filter promoted tweets",
+  "Automatically filter out promoted/advertisement tweets from being saved to the database.": "Automatically filter out promoted/advertisement tweets from being saved to the database.",
   "Local Database": "Local Database",
   "Analyze DB": "Analyze",
   "Export DB": "Export",

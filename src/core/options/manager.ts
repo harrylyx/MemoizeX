@@ -15,6 +15,7 @@ export interface AppOptions {
   filenamePattern?: string;
   language?: string;
   dedicatedDbForAccounts?: boolean;
+  filterPromotedTweets?: boolean;
   version?: string;
 }
 
@@ -35,6 +36,7 @@ export const DEFAULT_APP_OPTIONS: AppOptions = {
   filenamePattern: '{screen_name}_{id}_{type}_{num}_{date}.{ext}',
   language: '',
   dedicatedDbForAccounts: false,
+  filterPromotedTweets: true,
   version: packageJson.version,
 };
 
