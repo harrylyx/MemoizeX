@@ -70,7 +70,18 @@ Once installed, a floating panel appears on Twitter/X pages:
       "bookmarks": 10
     },
     "media": [
-      { "type": "photo", "url": "https://..." }
+      {
+        "type": "photo",
+        "url": "https://t.co/xxx",
+        "thumbnail": "https://pbs.twimg.com/media/xxx.jpg?name=thumb",
+        "original": "https://pbs.twimg.com/media/xxx.jpg?format=jpg&name=orig"
+      },
+      {
+        "type": "video",
+        "url": "https://t.co/xxx",
+        "thumbnail": "https://pbs.twimg.com/ext_tw_video_thumb/xxx/pu/img/xxx.jpg?name=thumb",
+        "original": "https://video.twimg.com/ext_tw_video/xxx/pu/vid/xxx.mp4"
+      }
     ],
     "article": {
       "id": "1234567890",

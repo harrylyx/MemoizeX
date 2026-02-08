@@ -181,6 +181,10 @@ export interface WebhookUrlItem {
 export interface WebhookMediaItem {
   /** Media type */
   type: 'photo' | 'video' | 'animated_gif';
-  /** Media URL */
+  /** Short URL (t.co link) */
   url: string;
+  /** Thumbnail URL */
+  thumbnail: string;
+  /** Original media URL (full resolution image or video) */
+  original: string;
 }

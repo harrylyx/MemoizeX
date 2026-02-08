@@ -9,7 +9,7 @@ import {
   WebhookUrlItem,
   WebhookArticle,
 } from '@/types/webhook';
-import { extractTweetMedia } from '@/utils/api';
+import { extractTweetMedia, getMediaOriginalUrl, formatTwitterImage } from '@/utils/api';
 
 /**
  * Formats a tweet into a webhook payload.
@@ -221,6 +221,8 @@ function formatMediaItems(tweet: Tweet): WebhookMediaItem[] {
   return mediaItems.map((item) => ({
     type: item.type as 'photo' | 'video' | 'animated_gif',
     url: item.url,
+    thumbnail: formatTwitterImage(item.media_url_https, 'thumb'),
+    original: getMediaOriginalUrl(item),
   }));
 }
 
