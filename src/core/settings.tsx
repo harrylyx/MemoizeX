@@ -295,6 +295,27 @@ export function Settings() {
               }}
             />
           </label>
+          <label class={styles.item}>
+            <div class="flex items-center">
+              <span class="label-text whitespace-nowrap">{t('Filter promotional tweets')}</span>
+              <a
+                class="tooltip tooltip-bottom ml-0.5 before:max-w-40"
+                data-tip={t(
+                  'Filter tweets from business accounts and amplify videos.',
+                )}
+              >
+                <IconHelp size={20} />
+              </a>
+            </div>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary"
+              checked={options.get('filterPromotionalTweets')}
+              onChange={(e) => {
+                options.set('filterPromotionalTweets', (e.target as HTMLInputElement)?.checked);
+              }}
+            />
+          </label>
           <div class={styles.item}>
             <div class="flex items-center">
               <span class="label-text whitespace-nowrap">{t('Local Database')}</span>

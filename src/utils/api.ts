@@ -216,6 +216,11 @@ export function extractTweetUnion(tweet: TweetUnion): Tweet | null {
       result = filterPromotedTweet(result);
     }
 
+    // Filter promotional tweets if the option is enabled
+    if (result && options.get('filterPromotionalTweets', true)) {
+      result = filterPromotionalTweet(result);
+    }
+
     if (result) {
       return result;
     }
@@ -324,11 +329,49 @@ export function isPromotedTweet(tweet: Tweet): boolean {
 }
 
 /**
+ * Check if a tweet is promotional content (business accounts, amplify videos).
+ */
+export function isPromotionalTweet(tweet: Tweet): boolean {
+  // 1. Check if media contains amplify_video (paid promotional video format)
+  const media = tweet.legacy.extended_entities?.media ?? tweet.legacy.entities?.media ?? [];
+  for (const item of media) {
+    const mediaUrl = item.media_url_https ?? '';
+    const videoUrls = item.video_info?.variants?.map((v) => v.url) ?? [];
+
+    if (mediaUrl.includes('amplify_video')) {
+      return true;
+    }
+    if (videoUrls.some((url) => url.includes('amplify_video'))) {
+      return true;
+    }
+  }
+
+  // 2. Check if author is a verified business account
+  const user = tweet.core?.user_results?.result;
+  if (user?.verification?.verified_type === 'Business') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Filter out promoted tweets if the option is enabled.
  */
 export function filterPromotedTweet(tweet: Tweet): Tweet | null {
   if (isPromotedTweet(tweet)) {
     logger.debug('Filtered promoted tweet', tweet.rest_id);
+    return null;
+  }
+  return tweet;
+}
+
+/**
+ * Filter out promotional tweets if the option is enabled.
+ */
+export function filterPromotionalTweet(tweet: Tweet): Tweet | null {
+  if (isPromotionalTweet(tweet)) {
+    logger.debug('Filtered promotional tweet', tweet.rest_id);
     return null;
   }
   return tweet;

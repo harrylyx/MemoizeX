@@ -16,6 +16,7 @@ export interface AppOptions {
   language?: string;
   dedicatedDbForAccounts?: boolean;
   filterPromotedTweets?: boolean;
+  filterPromotionalTweets?: boolean;
   version?: string;
 }
 
@@ -37,6 +38,7 @@ export const DEFAULT_APP_OPTIONS: AppOptions = {
   language: '',
   dedicatedDbForAccounts: false,
   filterPromotedTweets: true,
+  filterPromotionalTweets: true,
   version: packageJson.version,
 };
 

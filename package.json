@@ -1,7 +1,7 @@
 {
   "name": "memoizex",
   "description": "Enhanced Twitter/X data management with browsing history and webhook notifications.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "MemoizeX",
   "license": "MIT",
   "homepage": "https://github.com/memoizex/memoizex",

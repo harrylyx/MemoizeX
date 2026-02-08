@@ -12,6 +12,8 @@
   "This will create separate database for each Twitter account, which can help reduce the chance of data mixing when you use multiple accounts.": "This will create separate database for each Twitter account, which can help reduce the chance of data mixing when you use multiple accounts.",
   "Filter promoted tweets": "Filter promoted tweets",
   "Automatically filter out promoted/advertisement tweets from being saved to the database.": "Automatically filter out promoted/advertisement tweets from being saved to the database.",
+  "Filter promotional tweets": "Filter promotional tweets",
+  "Filter tweets from business accounts and amplify videos.": "Filter tweets from business accounts and amplify videos.",
   "Local Database": "Local Database",
   "Analyze DB": "Analyze",
   "Export DB": "Export",
